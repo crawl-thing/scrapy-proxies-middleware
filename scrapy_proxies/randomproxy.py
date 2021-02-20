@@ -22,49 +22,47 @@ import re
 import random
 import base64
 import logging
-
+from scrapy_proxies_config.client.py_cli import ProxyFetcher
 log = logging.getLogger('scrapy.proxies')
+
+
 
 
 class Mode:
     RANDOMIZE_PROXY_EVERY_REQUESTS, RANDOMIZE_PROXY_ONCE, SET_CUSTOM_PROXY = range(3)
 
 
+
 class RandomProxy(object):
+    # def get_redis_conn(**kwargs):
+    #     host = kwargs.get('host', settings.get('REDIS_HOST'))
+    #     port = kwargs.get('port', settings.get('REDIS_PORT'))
+    #     db = kwargs.get('db', settings.get('DEFAULT_REDIS_DB'))
+    #     password = kwargs.get('password', settings.get('REDIS_PASSWORD') )
+    #     return redis.StrictRedis(host, port, db, password)
+    
     def __init__(self, settings):
         self.mode = settings.get('PROXY_MODE')
-        self.proxy_list = settings.get('PROXY_LIST')
+        # 这里从配置选取类型，是要https还是http
+        self.proxy_types = settings.get('PROXY_TYPE_LIST', ['https', 'http'])
         self.chosen_proxy = ''
-
+        # 选择ip的复用模式
+        self.strategy = settings.get('strategy', 'greedy')
+        # ip 成绩等级
+        self.ip_level = settings.get('IP_LEVEL',8)
+        for proxy_type in self.proxy_types
+            fetcher = ProxyFetcher(proxy_type, strategy=self.strategy, length=self.ip_level)
+             self.proxies += fetcher.get_proxies()
         if self.mode == Mode.RANDOMIZE_PROXY_EVERY_REQUESTS or self.mode == Mode.RANDOMIZE_PROXY_ONCE:
-            if self.proxy_list is None:
-                raise KeyError('PROXY_LIST setting is missing')
-            self.proxies = {}
-            fin = open(self.proxy_list)
-            try:
-                for line in fin.readlines():
-                    parts = re.match('(\w+://)([^:]+?:[^@]+?@)?(.+)', line.strip())
-                    if not parts:
-                        continue
-
-                    # Cut trailing @
-                    if parts.group(2):
-                        user_pass = parts.group(2)[:-1]
-                    else:
-                        user_pass = ''
-
-                    self.proxies[parts.group(1) + parts.group(3)] = user_pass
-            finally:
-                fin.close()
             if self.mode == Mode.RANDOMIZE_PROXY_ONCE:
-                self.chosen_proxy = random.choice(list(self.proxies.keys()))
+                self.chosen_proxy = random.choice(list(self.proxies))
         elif self.mode == Mode.SET_CUSTOM_PROXY:
             custom_proxy = settings.get('CUSTOM_PROXY')
             self.proxies = {}
+            # 不符合格式
             parts = re.match('(\w+://)([^:]+?:[^@]+?@)?(.+)', custom_proxy.strip())
             if not parts:
                 raise ValueError('CUSTOM_PROXY is not well formatted')
-
             if parts.group(2):
                 user_pass = parts.group(2)[:-1]
             else:

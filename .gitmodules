@@ -1,0 +1,3 @@
+[submodule "scrapy_proxies_config"]
+	path = scrapy_proxies_config
+	url = https://github.com/crawl-thing/scrapy_proxies_config.git
