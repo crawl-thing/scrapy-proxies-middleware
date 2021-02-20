@@ -4,7 +4,7 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 import requests
 from scrapy import signals
-
+import logging
 import random
 
 from twisted.internet.error import TCPTimedOutError, TimeoutError
@@ -14,7 +14,7 @@ from .lib.scrapy_proxies_config.client.py_cli import ProxyFetcher
 
 
 
-
+log = logging.getLogger('scrapy.proxies')
 
 class FundspiderDownloaderMiddleware(object):
     # def get_redis_conn(**kwargs):
